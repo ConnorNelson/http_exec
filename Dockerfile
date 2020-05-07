@@ -7,9 +7,7 @@ RUN apt-get update && \
 RUN git clone https://github.com/BR903/ELFkickers
 RUN cd ELFkickers && make
 
-ADD entrypoint.sh /
-
 RUN mkdir /app
 WORKDIR /app
 
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT ./entrypoint.sh
