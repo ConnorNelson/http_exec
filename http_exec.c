@@ -6,6 +6,8 @@
 #include <sys/mman.h>
 #include <arpa/inet.h>
 
+#define HOST argv[1]
+#define PORT argv[2]
 #define GET "GET / HTTP/1.0\r\n\r\n"
 
 static int _atoi(char *a)
@@ -32,9 +34,6 @@ static uint32_t _ipton4(char *ip)
 __attribute__((always_inline))
 static inline void main(int argc, char* argv[])
 {
-  char *host;
-  char *port;
-
   int sock;
   struct sockaddr_in addr;
 
@@ -45,13 +44,10 @@ static inline void main(int argc, char* argv[])
   char buffer[4096];
   int length;
 
-  host = argv[1];
-  port = argv[2];
-
   sock = syscall(SYS_socket, AF_INET, SOCK_STREAM, 0);
   addr.sin_family = AF_INET;
-  addr.sin_addr.s_addr = _ipton4(host);
-  addr.sin_port = htons(_atoi(port));
+  addr.sin_addr.s_addr = _ipton4(HOST);
+  addr.sin_port = htons(_atoi(PORT));
   syscall(SYS_connect, sock, (struct sockaddr *) &addr, sizeof(addr));
 
   syscall(SYS_write, sock, GET, sizeof(GET) - 1);
