@@ -2,12 +2,14 @@
 FROM ubuntu:18.04
 
 RUN apt-get update && \
-    apt-get install -y build-essential git
+    apt-get install -y build-essential git netcat
 
 RUN git clone https://github.com/BR903/ELFkickers
 RUN cd ELFkickers && make
 
+ADD entrypoint.sh /
+
 RUN mkdir /app
 WORKDIR /app
 
-ENTRYPOINT make clean && make && /ELFkickers/bin/sstrip http_exec
+ENTRYPOINT /entrypoint.sh
