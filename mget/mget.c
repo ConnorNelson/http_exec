@@ -59,6 +59,8 @@ static inline void main(char* argv[])
 
   while (syscall(SYS_write, STDOUT, buffer,
                  syscall(SYS_read, SOCK, buffer, sizeof(buffer))));
+
+  syscall(SYS_exit, 0);
 }
 
 // __attribute__((force_align_arg_pointer))
